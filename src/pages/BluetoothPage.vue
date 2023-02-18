@@ -1,47 +1,88 @@
 <template>
   <div class="w-full">
-    <div class="mt-4 text-xl font-bold uppercase">Compartir Imágenes</div>
+    <div class="mt-4 text-xl font-bold uppercase">
+      Comprimir y Compartir Imágenes
+    </div>
     <div class="flex flex-col">
       <div class="w-full flex flex-col justify-center px-3 my-4">
-        <q-btn dense @click="chooseFile">Añadir foto</q-btn>
         <template v-if="image.url">
           <div class="flex flex-col">
             <q-img :src="image.url" :ratio="4 / 3" class="my-2">
-              <div class="absolute-bottom text-subtitle1 text-center my-2">
-                {{ image.name }}/ {{ image.size }}
+              <div
+                class="absolute-bottom text-subtitle1 text-center my-2"
+                dense
+                @click="chooseFile"
+              >
+                <q-btn> {{ image.name }}/ {{ image.size }}</q-btn>
               </div>
             </q-img>
 
-            <div class="flex justify-between">
-              <q-input
-                type="number"
-                v-model="percent"
-                placeholder="Comprimir imagen"
-                outlined
-                dense
-                class="w-3/5"
-              >
-                <template v-slot:append>
-                  <q-btn
-                    dense
-                    flat
-                    size="sm"
-                    @click="zip"
-                    :disabled="percent <= 0"
-                  >
-                    <q-icon name="compress" />
-                  </q-btn>
-                </template>
-              </q-input>
-              <q-btn
-                class="w-1/3"
-                dense
-                size="12px"
-                outlined
-                @click="sendFile(image.file)"
-                label="Enviar"
-                icon-right="send"
-              />
+            <div class="flex flex-col justify-between">
+              <q-btn push color="primary" label="Comprimir Foto">
+                <q-popup-proxy>
+                  <q-banner class="bg-white">
+                    <q-input
+                      type="number"
+                      v-model="percent"
+                      placeholder="Ingrese porcentaje max(50)"
+                      outlined
+                      dense
+                      :readonly="!image.size"
+                    >
+                      <template v-slot:append>
+                        <q-btn
+                          dense
+                          flat
+                          size="sm"
+                          @click="zip"
+                          :disabled="percent <= 0"
+                        >
+                          <q-icon name="compress" />
+                        </q-btn>
+                      </template>
+                    </q-input>
+                  </q-banner>
+                </q-popup-proxy>
+              </q-btn>
+
+              <div class="flex justify-around my-3">
+                <q-btn
+                  :disabled="!image.size"
+                  fab
+                  dense
+                  @click="sendFile(image.file, 'bluetooth')"
+                  color="primary"
+                >
+                  <q-icon name="bluetooth" />
+                </q-btn>
+                <q-btn
+                  :disabled="!image.size"
+                  fab
+                  dense
+                  @click="sendFile(image.file, 'whatsapp')"
+                  color="green"
+                >
+                  <q-icon class="ri-whatsapp-line" />
+                </q-btn>
+                <q-btn
+                  :disabled="!image.size"
+                  fab
+                  dense
+                  @click="sendFile(image.file, 'facebook')"
+                  color="blue"
+                >
+                  <q-icon class="ri-facebook-fill" />
+                </q-btn>
+                <q-btn
+                  :disabled="!image.size"
+                  fab
+                  dense
+                  @click="sendFile(image.file, 'wifi')"
+                  color="blue"
+                >
+                  <q-icon class="ri-wifi-fill" />
+                </q-btn>
+              </div>
             </div>
           </div>
         </template>
@@ -59,7 +100,11 @@ export default defineComponent({
 
   data() {
     return {
-      image: {},
+      image: {
+        file: "https://st3.depositphotos.com/23594922/31822/v/600/depositphotos_318221368-stock-illustration-missing-picture-page-for-website.jpg",
+        url: "https://st3.depositphotos.com/23594922/31822/v/600/depositphotos_318221368-stock-illustration-missing-picture-page-for-website.jpg",
+        name: "Elige una imagen",
+      },
       percent: null,
       loading: false,
     };
@@ -102,7 +147,7 @@ export default defineComponent({
           });
         });
     },
-    async sendFile(file) {
+    async sendFile(file, via = "bluetooth") {
       try {
         const ctx = this;
         this.loading = true;
@@ -125,7 +170,7 @@ export default defineComponent({
         var options = {
           message: "Imagen",
           files: [file],
-          appPackageName: "bluetooth",
+          appPackageName: via,
         };
 
         window.plugins.socialsharing.shareWithOptions(
@@ -149,7 +194,7 @@ export default defineComponent({
           const mb = bytes / 1e6;
           this.image = {
             url: res.dataURI,
-            name: res.name,
+            name: res.name.substring(0, 10) + "..." + res.name.slice(-4),
             size: mb.toFixed(2) + " MB",
             file: res.dataURI,
           };
